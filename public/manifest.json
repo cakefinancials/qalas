@@ -2,8 +2,17 @@
     "name": "QALA",
     "version": "1.0",
     "manifest_version": 2,
-    "browser_action": {
-        "default_popup": "index.html"
+    "browser_action": {},
+    "content_security_policy": "script-src 'self' 'sha256-GgRxrVOKNdB4LrRsVPDSbzvfdV4UqglmviH9GoBJ5jk='; object-src 'self'",
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "css": ["/static/css/app.css", "/static/css/content.css"],
+            "js": ["/static/js/0.chunk.js", "/static/js/content.js"]
+        }
+    ],
+    "background": {
+        "scripts": ["app/background.js", "app/hot-reload.js"]
     },
-    "content_security_policy": "script-src 'self' 'sha256-GgRxrVOKNdB4LrRsVPDSbzvfdV4UqglmviH9GoBJ5jk='; object-src 'self'"
+    "permissions": ["identity"]
 }
