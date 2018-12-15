@@ -8,7 +8,16 @@ class Main extends React.Component {
   render() {
     return (
       <div className={'my-extension'}>
-        <h1>Hello world - My first Extension suck it!!!!!</h1>
+        <h1>Hello world - My first Extension suck !!!!!</h1>
+        <button
+          onClick={() =>
+            chrome.extension.sendMessage({
+              action: 'launchOauth'
+            })
+          }
+        >
+                    SIGN IN TO SLACK
+        </button>
       </div>
     );
   }

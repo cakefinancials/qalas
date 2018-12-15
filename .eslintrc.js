@@ -29,6 +29,7 @@ module.exports = {
         fail: true
     },
     rules: {
+        'no-useless-escape': 'off',
         'no-console': 'off',
         'array-bracket-spacing': ['error', 'always'],
         'brace-style': ['error', '1tbs'],

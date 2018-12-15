@@ -12,7 +12,7 @@
         }
     ],
     "background": {
-        "scripts": ["app/background.js", "app/hot-reload.js"]
+        "scripts": ["/static/js/4.chunk.js", "/static/js/background.js", "/app/hot-reload.js"]
     },
     "permissions": ["identity"]
 }
