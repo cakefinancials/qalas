@@ -25,6 +25,7 @@ const reload = () => {
       chrome.tabs.reload(tabs[0].id);
     }
 
+    console.log(`Reloading: ${new Date()}`);
     chrome.runtime.reload();
   });
 };

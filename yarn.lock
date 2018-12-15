@@ -2403,6 +2403,11 @@ copy-descriptor@^0.1.0:
   resolved "https://registry.yarnpkg.com/copy-descriptor/-/copy-descriptor-0.1.1.tgz#676f6eb3c39997c2ee1ac3a924fd6124748f578d"
   integrity sha1-Z29us8OZl8LuGsOpJP1hJHSPV40=
 
+core-js@2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.4.1.tgz#4de911e667b0eae9124e34254b53aea6fc618d3e"
+  integrity sha1-TekR5mew6ukSTjQlS1OupvxhjT4=
+
 core-js@2.5.7, core-js@^2.4.0, core-js@^2.5.0:
   version "2.5.7"
   resolved "https://registry.yarnpkg.com/core-js/-/core-js-2.5.7.tgz#f972608ff0cead68b841a16a932d0b183791814e"
@@ -9258,6 +9263,27 @@ tty-browserify@0.0.0:
   version "0.0.0"
   resolved "https://registry.yarnpkg.com/tty-browserify/-/tty-browserify-0.0.0.tgz#a157ba402da24e9bf957f9aa69d524eed42901a6"
   integrity sha1-oVe6QC2iTpv5V/mqadUk7tQpAaY=
+
+tui-code-snippet@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/tui-code-snippet/-/tui-code-snippet-1.5.0.tgz#91c076ae84e3d619c783bb91d72ca462b06303c2"
+  integrity sha512-grVv/lrHDXp9sRWypmMe76fHDlpdSfVYLiVmy8f765mWEBk+2JtiKgH+ACuipNtPZbUAy2pYgIWRQfDcg0zdCw==
+
+tui-color-picker@^2.2.0:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/tui-color-picker/-/tui-color-picker-2.2.1.tgz#60fa5bd240173a59d91a69729d46280255f4ae06"
+  integrity sha512-1xoHeixtk+8GpjuU5XEC8pMlUONY8Cq/O/jtlWB9nbFmWLkqqBrHVGfqKDhA6WocZ/kT3L1O+MNWNrB/awIdug==
+  dependencies:
+    tui-code-snippet "^1.5.0"
+
+tui-image-editor@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/tui-image-editor/-/tui-image-editor-3.3.0.tgz#7e525311177352c001e2b277251d8620be6e02c3"
+  integrity sha512-p4WXgemqJga6c8MYxGK4VRoctnztQtXSrhMrjrmXnnysTaq2fJ9WxVfLP4FpHQWtwrdftLQQf+YYynYPJMSnkg==
+  dependencies:
+    core-js "2.4.1"
+    tui-code-snippet "^1.5.0"
+    tui-color-picker "^2.2.0"
 
 tunnel-agent@^0.6.0:
   version "0.6.0"
