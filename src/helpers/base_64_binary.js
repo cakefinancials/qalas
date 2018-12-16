@@ -1,4 +1,4 @@
-const Base64Binary = {
+export const Base64Binary = {
   _keyStr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=',
 
   generateJPEGFileFromDataURI: function({ dataUri, filename }) {
@@ -70,5 +70,3 @@ const Base64Binary = {
     return uarray;
   }
 };
-
-module.exports = Base64Binary;

@@ -1,4 +1,6 @@
 /*global chrome*/
+import * as R from 'ramda';
+
 /**
  * Converts asynchronous chrome api based callbacks to promises
  *
@@ -6,7 +8,12 @@
  * @param {arguments} arguments to function
  * @returns {Promise} Pending promise returned by function
  */
-const promisify = function(fn) {
+const promisify = function(chromeFnPath) {
+  const fn = R.path(chromeFnPath, chrome);
+  if (fn === undefined) {
+    return Promise.reject('NOT A VALID CHROME FUNCTION IS THIS CONTEXT');
+  }
+
   const args = Array.prototype.slice.call(arguments).slice(1);
   return new Promise(function(resolve, reject) {
     fn.apply(
@@ -22,21 +29,21 @@ const promisify = function(fn) {
   });
 };
 
-const promisifyChromeFn = chromeFn => (...args) => promisify(chromeFn, ...args);
+const promisifyChromeFn = chromeFnPath => (...args) => promisify(chromeFnPath, ...args);
 
-module.exports = {
+export const chromep = {
   tabs: {
-    query: promisifyChromeFn(chrome.tabs.query),
-    captureVisibleTab: promisifyChromeFn(chrome.tabs.captureVisibleTab),
-    sendMessage: promisifyChromeFn(chrome.tabs.sendMessage)
+    query: promisifyChromeFn([ 'tabs', 'query' ]),
+    captureVisibleTab: promisifyChromeFn([ 'tabs', 'captureVisibleTab' ]),
+    sendMessage: promisifyChromeFn([ 'tabs', 'sendMessage' ])
   },
   identity: {
-    launchWebAuthFlow: promisifyChromeFn(chrome.identity.launchWebAuthFlow)
+    launchWebAuthFlow: promisifyChromeFn([ 'identity', 'launchWebAuthFlow' ])
   },
   storage: {
     sync: {
-      set: promisifyChromeFn(chrome.storage.sync.set),
-      get: promisifyChromeFn(chrome.storage.sync.get)
+      set: promisifyChromeFn([ 'storage', 'sync', 'set' ]),
+      get: promisifyChromeFn([ 'storage', 'sync', 'get' ])
     }
   }
 };

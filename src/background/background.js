@@ -3,9 +3,9 @@ import axios from 'axios';
 import queryString from 'query-string';
 import Slack from 'slack';
 
-import chromep from './helpers/chrome_promisify';
-import Base64Binary from './helpers/base_64_binary';
-import { CHROME_MESSAGES } from './helpers/constants';
+import { chromep } from '../helpers/chrome_promisify';
+import { Base64Binary } from '../helpers/base_64_binary';
+import { CHROME_MESSAGES } from '../helpers/constants';
 
 // Called when the user clicks on the browser action
 chrome.browserAction.onClicked.addListener(async function() {
@@ -83,7 +83,7 @@ chrome.extension.onMessage.addListener(async function(request) {
     const channels = await slackClient.channels.list();
     console.log({ channels });
 
-    const dataUri = await chromep.tabs.captureVisibleTab(undefined, undefined);
+    const { dataUri } = request;
     const file = Base64Binary.generateJPEGFileFromDataURI({
       dataUri,
       filename: 'suckit.jpg'

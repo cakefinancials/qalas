@@ -4,6 +4,7 @@
     "manifest_version": 2,
     "browser_action": {},
     "content_security_policy": "script-src 'self' 'sha256-GgRxrVOKNdB4LrRsVPDSbzvfdV4UqglmviH9GoBJ5jk='; object-src 'self'",
+    "web_accessible_resources": ["static/media/*"],
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
