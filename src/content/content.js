@@ -4,6 +4,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './content.css';
 import * as R from 'ramda';
+import { Slider, Row, Col } from 'antd';
+import 'rc-color-picker/assets/index.css';
+import ColorPicker from 'rc-color-picker';
 
 import ImageEditor from 'tui-image-editor';
 import { Base64Binary } from '../helpers/base_64_binary';
@@ -81,12 +84,22 @@ const Main = stateManagerContainer.withStateManagers({
   }
 });
 
+function hexToRGBa(hex, alpha) {
+  var r = parseInt(hex.slice(1, 3), 16);
+  var g = parseInt(hex.slice(3, 5), 16);
+  var b = parseInt(hex.slice(5, 7), 16);
+  var a = alpha || 1;
+
+  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + a + ')';
+}
+
 class TuiTest extends React.Component {
   constructor(props) {
     super(props);
     this.tuiContainer = React.createRef();
     this.state = {
-      cropping: false
+      edit_cropping: false,
+      edit_drawing: false
     };
   }
 
@@ -125,6 +138,14 @@ class TuiTest extends React.Component {
   }
 
   render() {
+    const inEditingMode = R.any(
+      R.identity,
+      R.map(
+        ([ key, value ]) => key.startsWith('edit_') && value === true,
+        R.toPairs(this.state)
+      )
+    );
+
     return (
       <React.Fragment>
         <button
@@ -138,27 +159,61 @@ class TuiTest extends React.Component {
                     Send over screenshot
         </button>
         <br />
-        <button
-          onClick={async () => {
-            await this.imageEditor.addImageObject(chrome.extension.getURL(QalaCry));
-          }}
-        >
-                    KOALA!
-        </button>
-        {!this.state.cropping ? (
-          <button
-            onClick={() => {
-              this.setState({ cropping: true });
-              this.imageEditor.startDrawingMode('CROPPER');
-            }}
-          >
-                        Crop
-          </button>
-        ) : (
+        {inEditingMode ? null : (
+          <React.Fragment>
+            <button
+              onClick={async () => {
+                await this.imageEditor.addImageObject(
+                  chrome.extension.getURL(QalaCry)
+                );
+              }}
+            >
+                            KOALA!
+            </button>
+            <button
+              onClick={() => {
+                this.setState({ edit_drawing: true });
+                this.imageEditor.startDrawingMode('FREE_DRAWING', {
+                  width: 10,
+                  color: hexToRGBa('#a5a5a5', 1)
+                });
+              }}
+            >
+                            Draw
+            </button>
+            <button
+              onClick={() => {
+                this.setState({ edit_cropping: true });
+                this.imageEditor.startDrawingMode('CROPPER');
+              }}
+            >
+                            Crop
+            </button>
+          </React.Fragment>
+        )}
+        {this.state.edit_drawing && (
+          <React.Fragment>
+            <Row>
+              <Col span={12}>
+                <Slider min={1} max={20} onChange={console.log} />
+              </Col>
+            </Row>
+            <ColorPicker color={'#36c'} onChange={console.log} />
+            <button
+              onClick={() => {
+                this.setState({ edit_drawing: false });
+                this.imageEditor.stopDrawingMode();
+              }}
+            >
+                            Exit Drawing
+            </button>
+          </React.Fragment>
+        )}
+        {this.state.edit_cropping && (
           <React.Fragment>
             <button
               onClick={() => {
-                this.setState({ cropping: false });
+                this.setState({ edit_cropping: false });
                 this.imageEditor
                   .crop(this.imageEditor.getCropzoneRect())
                   .then(() => {
@@ -171,7 +226,7 @@ class TuiTest extends React.Component {
             </button>
             <button
               onClick={() => {
-                this.setState({ cropping: false });
+                this.setState({ edit_cropping: false });
                 this.imageEditor.stopDrawingMode();
               }}
             >
