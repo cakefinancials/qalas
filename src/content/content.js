@@ -108,6 +108,7 @@ class TuiTest extends React.Component {
     this.screenshotListener = async function(request) {
       try {
         if (request.message === CHROME_MESSAGES.HERE_IS_YOUR_SCREENSHOT) {
+          app.style.display = 'block';
           const file = Base64Binary.generateJPEGFileFromDataURI({
             dataUri: request.dataUri,
             filename: 'blerg.jpg'
@@ -127,11 +128,12 @@ class TuiTest extends React.Component {
     return (
       <React.Fragment>
         <button
-          onClick={() =>
+          onClick={() => {
+            app.style.display = 'none';
             chrome.extension.sendMessage({
               message: CHROME_MESSAGES.SEND_OVER_SCREENSHOTS
-            })
-          }
+            });
+          }}
         >
                     Send over screenshot
         </button>
