@@ -1,4 +1,6 @@
 /* src/content.css */
+@import '~antd/dist/antd.css';
+
 .my-extension {
     padding: 20px;
 }

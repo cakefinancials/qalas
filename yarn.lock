@@ -10114,10 +10114,9 @@ tui-color-picker@^2.2.0:
   dependencies:
     tui-code-snippet "^1.5.0"
 
-tui-image-editor@^3.3.0:
+"tui-image-editor@https://github.com/cakefinancials/tui.image-editor.git#8dd5ad9c34cdb480b53e96da416dc4d77b500f80":
   version "3.3.0"
-  resolved "https://registry.yarnpkg.com/tui-image-editor/-/tui-image-editor-3.3.0.tgz#7e525311177352c001e2b277251d8620be6e02c3"
-  integrity sha512-p4WXgemqJga6c8MYxGK4VRoctnztQtXSrhMrjrmXnnysTaq2fJ9WxVfLP4FpHQWtwrdftLQQf+YYynYPJMSnkg==
+  resolved "https://github.com/cakefinancials/tui.image-editor.git#8dd5ad9c34cdb480b53e96da416dc4d77b500f80"
   dependencies:
     core-js "2.4.1"
     tui-code-snippet "^1.5.0"

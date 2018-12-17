@@ -53,7 +53,7 @@
         "slack": "^11.0.1",
         "style-loader": "0.23.0",
         "terser-webpack-plugin": "1.1.0",
-        "tui-image-editor": "^3.3.0",
+        "tui-image-editor": "https://github.com/cakefinancials/tui.image-editor.git#8dd5ad9c34cdb480b53e96da416dc4d77b500f80",
         "url-loader": "1.1.1",
         "webpack": "4.19.1",
         "webpack-dev-server": "3.1.9",

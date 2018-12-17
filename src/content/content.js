@@ -2,16 +2,17 @@
 /*global chrome*/
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './content.css';
 import * as R from 'ramda';
 import { Slider, Row, Col } from 'antd';
 import 'rc-color-picker/assets/index.css';
 import ColorPicker from 'rc-color-picker';
+import '../App.css';
+import './content.css';
 
 import ImageEditor from 'tui-image-editor';
 import { Base64Binary } from '../helpers/base_64_binary';
 import { CHROME_MESSAGES } from '../helpers/constants';
-import { chromep } from '../helpers/chrome_promisify';
+//import { chromep } from '../helpers/chrome_promisify';
 import { config } from './config';
 
 import QalaCry from '../public/images/qala_cry.png';
@@ -19,21 +20,6 @@ import QalaCry from '../public/images/qala_cry.png';
 const {
   stateManager: { container: stateManagerContainer, STATE_MANAGER_NAMES }
 } = config;
-
-const slackDataStateManager = stateManagerContainer.getStateManager({
-  name: STATE_MANAGER_NAMES.SLACK_DATA
-});
-
-chrome.storage.onChanged.addListener(function(changes, namespace) {
-  if (namespace === 'sync' && R.has('slackAccessToken', changes)) {
-    slackDataStateManager.syncUpdate({ slackAccessToken: changes.slackAccessToken.newValue });
-  }
-});
-
-slackDataStateManager.asyncUpdate(async () => {
-  const { slackAccessToken } = await chromep.storage.sync.get([ 'slackAccessToken' ]);
-  return { slackAccessToken };
-});
 
 const Main = stateManagerContainer.withStateManagers({
   stateManagerNames: [ STATE_MANAGER_NAMES.SLACK_DATA ],
@@ -121,7 +107,7 @@ class TuiTest extends React.Component {
     this.screenshotListener = async function(request) {
       try {
         if (request.message === CHROME_MESSAGES.HERE_IS_YOUR_SCREENSHOT) {
-          app.style.display = 'block';
+          //app.style.display = 'block';
           const file = Base64Binary.generateJPEGFileFromDataURI({
             dataUri: request.dataUri,
             filename: 'blerg.jpg'
@@ -134,7 +120,7 @@ class TuiTest extends React.Component {
       }
     };
 
-    chrome.runtime.onMessage.addListener(this.screenshotListener);
+    //chrome.runtime.onMessage.addListener(this.screenshotListener);
   }
 
   render() {
@@ -150,7 +136,7 @@ class TuiTest extends React.Component {
       <React.Fragment>
         <button
           onClick={() => {
-            app.style.display = 'none';
+            //app.style.display = 'none';
             chrome.extension.sendMessage({
               message: CHROME_MESSAGES.SEND_OVER_SCREENSHOTS
             });
@@ -198,15 +184,23 @@ class TuiTest extends React.Component {
                 <Slider min={1} max={20} onChange={console.log} />
               </Col>
             </Row>
-            <ColorPicker color={'#36c'} onChange={console.log} />
-            <button
-              onClick={() => {
-                this.setState({ edit_drawing: false });
-                this.imageEditor.stopDrawingMode();
-              }}
-            >
-                            Exit Drawing
-            </button>
+            <Row>
+              <Col span={12}>
+                <ColorPicker color={'#36c'} onChange={console.log} />
+              </Col>
+            </Row>
+            <Row>
+              <Col span={12}>
+                <button
+                  onClick={() => {
+                    this.setState({ edit_drawing: false });
+                    this.imageEditor.stopDrawingMode();
+                  }}
+                >
+                                    Exit Drawing
+                </button>
+              </Col>
+            </Row>
           </React.Fragment>
         )}
         {this.state.edit_cropping && (
@@ -255,22 +249,79 @@ class TuiTest extends React.Component {
   }
 }
 
-const app = document.createElement('div');
-app.id = 'my-extension-root';
-document.body.appendChild(app);
-ReactDOM.render(<Main />, app);
+if (window.parent === window) {
+  console.log('I AM MYSELF');
+  window.addEventListener(
+    'message',
+    stuff => {
+      console.log('I GOT A MESSAGE');
+      console.log({ stuff });
+    },
+    false
+  );
+  let iframeContainer = document.createElement('iframe');
+  iframeContainer.id = 'my-extension-root';
+  iframeContainer.style.display = 'none';
+  document.body.appendChild(iframeContainer);
+  iframeContainer = document.getElementById('my-extension-root');
 
-app.style.display = 'none';
-chrome.runtime.onMessage.addListener(async function(request) {
-  if (request.message === CHROME_MESSAGES.TOGGLE_EXTENSION) {
-    toggle();
-  }
-});
+  const iframeHead = iframeContainer.contentDocument.getElementsByTagName('head')[0];
+  const contentCSSLink = document.createElement('link');
+  contentCSSLink.href = chrome.extension.getURL('/static/css/content.css');
+  contentCSSLink.rel = 'stylesheet';
+  contentCSSLink.type = 'text/css';
+  iframeHead.appendChild(contentCSSLink);
+  const chunkCSSLink = document.createElement('link');
+  chunkCSSLink.href = chrome.extension.getURL('/static/css/0.chunk.css');
+  chunkCSSLink.rel = 'stylesheet';
+  chunkCSSLink.type = 'text/css';
+  iframeHead.appendChild(chunkCSSLink);
+  const chunkScript = document.createElement('script');
+  chunkScript.src = chrome.extension.getURL('/static/js/0.chunk.js');
+  iframeHead.appendChild(chunkScript);
+  const contentScript = document.createElement('script');
+  contentScript.src = chrome.extension.getURL('/static/js/content.js');
+  iframeHead.appendChild(contentScript);
 
-function toggle() {
-  if (app.style.display === 'none') {
-    app.style.display = 'block';
-  } else {
-    app.style.display = 'none';
-  }
+  chrome.runtime.onMessage.addListener(async function(request) {
+    if (request.message === CHROME_MESSAGES.TOGGLE_EXTENSION) {
+      toggle();
+    }
+  });
+  const toggle = () => {
+    if (iframeContainer.style.display === 'none') {
+      iframeContainer.style.display = 'block';
+    } else {
+      iframeContainer.style.display = 'none';
+    }
+  };
+} else {
+  console.log('I AM NOT MYSELF');
+
+  const slackDataStateManager = stateManagerContainer.getStateManager({
+    name: STATE_MANAGER_NAMES.SLACK_DATA
+  });
+
+  /*
+  chrome.storage.onChanged.addListener(function(changes, namespace) {
+    if (namespace === 'sync' && R.has('slackAccessToken', changes)) {
+      slackDataStateManager.syncUpdate({
+        slackAccessToken: changes.slackAccessToken.newValue
+      });
+    }
+  });
+  */
+
+  console.log('HERE!!!');
+  window.parent.postMessage({ some: 'message' });
+
+  slackDataStateManager.asyncUpdate(async () => {
+    //const { slackAccessToken } = await chromep.storage.sync.get([ 'slackAccessToken' ]);
+    return { slackAccessToken: 'asdf' };
+  });
+
+  const app = document.createElement('div');
+  app.id = 'my-extension-root';
+  document.body.appendChild(app);
+  ReactDOM.render(<Main />, app);
 }

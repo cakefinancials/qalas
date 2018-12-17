@@ -28,6 +28,7 @@ const SCOPES = [
 ].join(', ');
 
 chrome.extension.onMessage.addListener(async function(request) {
+  console.log({ request });
   if (request.message === CHROME_MESSAGES.SEND_OVER_SCREENSHOTS) {
     const dataUri = await chromep.tabs.captureVisibleTab(undefined, undefined);
 
