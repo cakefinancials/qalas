@@ -11,7 +11,7 @@ import * as R from 'ramda';
 const promisify = function(chromeFnPath) {
   const fn = R.path(chromeFnPath, chrome);
   if (fn === undefined) {
-    return Promise.reject('NOT A VALID CHROME FUNCTION IS THIS CONTEXT');
+    return Promise.reject('NOT A VALID CHROME FUNCTION IN THIS CONTEXT');
   }
 
   const args = Array.prototype.slice.call(arguments).slice(1);
@@ -19,7 +19,6 @@ const promisify = function(chromeFnPath) {
     fn.apply(
       null,
       args.concat(function(res) {
-        console.log(chrome.runtime.lastError);
         if (chrome.runtime.lastError) {
           return reject(chrome.runtime.lastError);
         }
