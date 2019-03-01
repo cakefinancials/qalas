@@ -11,7 +11,7 @@ import { CHROME_MESSAGES } from '../helpers/constants';
 chrome.browserAction.onClicked.addListener(async function() {
   // Send a message to the active tab
   const tabs = await chromep.tabs.query({ active: true, currentWindow: true });
-  var activeTab = tabs[0];
+  const activeTab = tabs[0];
   await chromep.tabs.sendMessage(activeTab.id, { message: CHROME_MESSAGES.TOGGLE_EXTENSION });
 });
 
@@ -33,7 +33,7 @@ chrome.extension.onMessage.addListener(async function(request) {
     const dataUri = await chromep.tabs.captureVisibleTab(undefined, undefined);
 
     const tabs = await chromep.tabs.query({ active: true, currentWindow: true });
-    var activeTab = tabs[0];
+    const activeTab = tabs[0];
     await chromep.tabs.sendMessage(activeTab.id, {
       message: CHROME_MESSAGES.HERE_IS_YOUR_SCREENSHOT,
       dataUri
@@ -103,3 +103,65 @@ chrome.extension.onMessage.addListener(async function(request) {
     await axios.post('https://slack.com/api/files.upload', data, config);
   }
 });
+
+const arrayBufferToData = {
+  toBase64: function(arrayBuffer) {
+    let binary = '';
+    const bytes = new Uint8Array(arrayBuffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  },
+
+  toString: function(arrayBuffer) {
+    try {
+      const base64 = this.toBase64(arrayBuffer);
+
+      return decodeURIComponent(escape(window.atob(base64)));
+    } catch (e) {
+      console.warn('Can not be converted to String');
+      return false;
+    }
+  },
+
+  toJSON: function(arrayBuffer) {
+    try {
+      const string = this.toString(arrayBuffer);
+      return JSON.parse(string);
+    } catch (e) {
+      console.warn('Can not be converted to JSON');
+      return false;
+    }
+  }
+};
+
+chrome.webRequest.onBeforeRequest.addListener(
+  function(details) {
+    console.log({ details });
+  },
+  { urls: [ '<all_urls>' ] },
+  [ 'requestBody' ]
+);
+
+chrome.webRequest.onBeforeRequest.addListener(
+  function(details) {
+    console.log('REQUEST', details.method, details.url, details.requestId, { details });
+
+    if (details && details.type === 'xmlhttprequest') {
+      const buffer = details.requestBody.raw[0].bytes;
+      console.log(details.url, arrayBufferToData.toJSON(buffer));
+    }
+  },
+  { urls: [ '<all_urls>' ] },
+  [ 'requestBody' ]
+);
+
+chrome.webRequest.onBeforeSendHeaders.addListener(
+  function(details) {
+    console.log('HEADERS', details.requestId, details.url, { details });
+  },
+  { urls: [ '<all_urls>' ] },
+  [ 'requestHeaders', 'extraHeaders' ]
+);

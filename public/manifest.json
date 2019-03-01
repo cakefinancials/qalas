@@ -15,5 +15,5 @@
     "background": {
         "scripts": ["/static/js/0.chunk.js", "/static/js/background.js", "/app/hot-reload.js"]
     },
-    "permissions": ["identity", "storage", "activeTab"]
+    "permissions": ["identity", "storage", "activeTab", "webRequest", "<all_urls>"]
 }

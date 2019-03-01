@@ -14,8 +14,11 @@ import { Base64Binary } from '../helpers/base_64_binary';
 import { CHROME_MESSAGES } from '../helpers/constants';
 //import { chromep } from '../helpers/chrome_promisify';
 import { config } from './config';
+import { Random } from './random';
 
 import QalaCry from '../public/images/qala_cry.png';
+
+console.log('I AM HERE!!!');
 
 const {
   stateManager: { container: stateManagerContainer, STATE_MANAGER_NAMES }
@@ -40,6 +43,7 @@ const Main = stateManagerContainer.withStateManagers({
 
       return (
         <div className={'my-extension'}>
+          <Random />
           <h1>Hello world - My first Extension sucks!!!!!</h1>
           {slackAccessToken === undefined ? (
             <button
