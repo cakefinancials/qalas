@@ -81,13 +81,21 @@ if (window.parent === window) {
   contentScript.src = chrome.extension.getURL('/static/js/content.js');
   iframeHead.appendChild(contentScript);
 
-  const toggle = () => {
-    if (iframeContainer.style.display === 'none') {
-      iframeContainer.style.display = 'block';
-    } else {
-      iframeContainer.style.display = 'none';
-    }
+  const toggle = ({ open }) => {
+    iframeContainer.style.display = open ? 'block' : 'none';
   };
+
+  chrome.runtime.sendMessage(
+    { fromContentScript: true, message: CHROME_MESSAGES.REQUESTING_TOGGLE_POSITION },
+    function(response) {
+      if (chrome.runtime.lastError) {
+        // need to check lastError
+        console.log('RESPONSE FROM BACKGROUND', response, chrome.runtime.lastError);
+      } else {
+        toggle({ open: response.open });
+      }
+    }
+  );
 
   window.addEventListener(
     'message',
@@ -110,7 +118,7 @@ if (window.parent === window) {
 
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
     if (request.message === CHROME_MESSAGES.TOGGLE_EXTENSION) {
-      toggle();
+      toggle({ open: request.data.open });
     } else {
       console.log(
         'SENDING MESSAGE FROM BACKGROUND TO IFRAME',

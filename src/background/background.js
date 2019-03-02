@@ -1,6 +1,6 @@
 /*global chrome*/
 import { chromep } from '../helpers/chrome_promisify';
-import { arrayBufferToData } from '../helpers/array_buffer_to_data';
+//import { arrayBufferToData } from '../helpers/array_buffer_to_data';
 import { CHROME_MESSAGES } from '../helpers/constants';
 
 // Called when the user clicks on the browser action
@@ -19,9 +19,10 @@ chrome.browserAction.onClicked.addListener(async function() {
     await sendMessageToActiveTab({ message: 'HIIIIIII', data: { suck: 'it' } }).catch(() => {});
   }
 
-  await chromep.tabs
-    .sendMessage(activeTab.id, { message: CHROME_MESSAGES.TOGGLE_EXTENSION })
-    .catch(() => {});
+  await sendMessageToActiveTab({
+    message: CHROME_MESSAGES.TOGGLE_EXTENSION,
+    data: { open: tabsWithExtensionOpen.has(activeTab.id) }
+  });
 });
 
 // setting storage
@@ -44,10 +45,17 @@ chrome.extension.onMessage.addListener(async function(
   if (!fromContentScript) {
     return;
   }
+
+  if (message === CHROME_MESSAGES.REQUESTING_TOGGLE_POSITION) {
+    console.log('SENDER', sender);
+    sendResponse({ open: tabsWithExtensionOpen.has(sender.tab.id) });
+  }
+
   console.log('GOT DATA FROM CONTENT SCRIPTS', { message, data });
   sendResponse();
 });
 
+/*
 chrome.webRequest.onBeforeRequest.addListener(
   function(details) {
     if (!tabsWithExtensionOpen.has(details.tabId)) {
@@ -66,8 +74,6 @@ chrome.webRequest.onBeforeRequest.addListener(
       data: { details },
       tabId: details.tabId,
       parsedBody
-    }).catch(e => {
-      console.log('ERROR SENDING REQUEST BODY', e, details.requestId);
     });
   },
   { urls: [ '<all_urls>' ] },
@@ -85,10 +91,9 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
       message: CHROME_MESSAGES.RECEIVED_HEADERS,
       data: { details },
       tabId: details.tabId
-    }).catch(e => {
-      console.log('ERROR SENDING HEADERS', e, details.requestId);
     });
   },
   { urls: [ '<all_urls>' ] },
   [ 'requestHeaders', 'extraHeaders' ]
 );
+*/

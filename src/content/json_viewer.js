@@ -44,7 +44,6 @@ export class JsonViewer extends React.Component {
         shouldExpandNode={() => true}
         labelRenderer={function(reversePath) {
           const pathToNode = R.tail(R.reverse(reversePath));
-          console.log('Path To Label', pathToNode);
           return (
             <strong
               style={{ cursor: 'pointer' }}
@@ -56,8 +55,6 @@ export class JsonViewer extends React.Component {
         }}
         valueRenderer={function(rawValue, ...reversePath) {
           const pathToValue = R.init(R.tail(R.reverse(reversePath)));
-          console.log('Path To Value', pathToValue);
-          console.log('Value', R.path(pathToValue, EVS_EXAMPLE));
           return (
             <em
               style={{ cursor: 'pointer' }}
