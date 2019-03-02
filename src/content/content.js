@@ -9,11 +9,19 @@ import * as R from 'ramda';
 import { CHROME_MESSAGES } from '../helpers/constants';
 //import { chromep } from '../helpers/chrome_promisify';
 import { config } from './config';
-import { Random } from './random';
+import { JsonViewer } from './json_viewer';
 
 const {
   stateManager: { container: stateManagerContainer }
 } = config;
+
+const sendMessageToParent = ({ message, data }) => {
+  window.parent.postMessage({
+    fromChild: true,
+    message,
+    data
+  });
+};
 
 const Main = stateManagerContainer.withStateManagers({
   stateManagerNames: [],
@@ -34,17 +42,13 @@ const Main = stateManagerContainer.withStateManagers({
       );
 
       console.log('SENDING MESSAGE TO PARENT');
-      window.parent.postMessage({
-        fromChild: true,
-        message: 'I AM ALIVE',
-        data: { suck: 'it' }
-      });
+      sendMessageToParent({ message: 'HELLO THERE', data: { suck: 'it' } });
     }
 
     render() {
       return (
         <div className={'my-extension'}>
-          <Random />
+          <JsonViewer />
           <h1>Hello world - My first Extension sucks!!!!!</h1>
         </div>
       );
@@ -92,11 +96,11 @@ if (window.parent === window) {
         return;
       }
 
-      console.log('PASSING MESSAGE TO BACKGROUND FROM PARENT');
       chrome.runtime.sendMessage({ fromContentScript: true, message, data }, function(
         response
       ) {
         if (chrome.runtime.lastError) {
+          // need to check lastError
           console.log('RESPONSE FROM BACKGROUND', response, chrome.runtime.lastError);
         }
       });
@@ -116,7 +120,7 @@ if (window.parent === window) {
       iframeContainer.contentWindow.postMessage(R.merge(request, { fromParent: true }));
     }
 
-    sendResponse('GOT IT');
+    sendResponse();
   });
 } else {
   const app = document.createElement('div');

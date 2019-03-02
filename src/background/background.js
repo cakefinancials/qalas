@@ -45,7 +45,7 @@ chrome.extension.onMessage.addListener(async function(
     return;
   }
   console.log('GOT DATA FROM CONTENT SCRIPTS', { message, data });
-  sendResponse('GOT IT');
+  sendResponse();
 });
 
 chrome.webRequest.onBeforeRequest.addListener(
