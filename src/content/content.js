@@ -23,6 +23,8 @@ const sendMessageToParent = ({ message, data }) => {
   });
 };
 
+const REQUESTS = {};
+
 const Main = stateManagerContainer.withStateManagers({
   stateManagerNames: [],
   WrappedComponent: class Main extends React.Component {
@@ -36,13 +38,18 @@ const Main = stateManagerContainer.withStateManagers({
         ({ data: { fromParent, message, data } = { fromChild: false } }) => {
           if (!fromParent) {
             return;
+          } else if (message === CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS) {
+            Object.assign(REQUESTS, data.existingRequests);
+            console.log('INIT REQUESTS', { REQUESTS });
+          } else if (message === CHROME_MESSAGES.RECEIVED_REQUEST) {
+            const { request } = data;
+            REQUESTS[request.requestDetails.requestId] = request;
+            console.log('GOT ANOTHER REQUEST', { REQUESTS });
           }
-          console.log('GOT MESSAGE FROM PARENT', message, data);
         }
       );
 
-      console.log('SENDING MESSAGE TO PARENT');
-      sendMessageToParent({ message: 'HELLO THERE', data: { suck: 'it' } });
+      sendMessageToParent({ message: CHROME_MESSAGES.REQUESTING_EXISTING_REQUESTS });
     }
 
     render() {
@@ -86,7 +93,7 @@ if (window.parent === window) {
   };
 
   chrome.runtime.sendMessage(
-    { fromContentScript: true, message: CHROME_MESSAGES.REQUESTING_TOGGLE_POSITION },
+    { fromContentScript: true, message: CHROME_MESSAGES.REQUESTING_OPEN_STATUS },
     function(response) {
       if (chrome.runtime.lastError) {
         // need to check lastError

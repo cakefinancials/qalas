@@ -1,28 +1,31 @@
 /*global chrome*/
 import { chromep } from '../helpers/chrome_promisify';
-//import { arrayBufferToData } from '../helpers/array_buffer_to_data';
+import { arrayBufferToData } from '../helpers/array_buffer_to_data';
 import { CHROME_MESSAGES } from '../helpers/constants';
+import { getRequestsManager } from './requests_manager';
 
 // Called when the user clicks on the browser action
 const tabsWithExtensionOpen = new Set();
-
 chrome.browserAction.onClicked.addListener(async function() {
-  // Send a message to the active tab
   const tabs = await chromep.tabs.query({ active: true, currentWindow: true });
   const activeTab = tabs[0];
 
   if (tabsWithExtensionOpen.has(activeTab.id)) {
     tabsWithExtensionOpen.delete(activeTab.id);
-    await sendMessageToActiveTab({ message: 'BYEEE', data: { suck: 'it' } }).catch(() => {});
   } else {
     tabsWithExtensionOpen.add(activeTab.id);
-    await sendMessageToActiveTab({ message: 'HIIIIIII', data: { suck: 'it' } }).catch(() => {});
   }
 
   await sendMessageToActiveTab({
     message: CHROME_MESSAGES.TOGGLE_EXTENSION,
     data: { open: tabsWithExtensionOpen.has(activeTab.id) }
   });
+});
+
+const requestsManager = getRequestsManager();
+requestsManager.addFullRequestReceivedListener(async ({ tabId, request }) => {
+  console.log('FULL REQUEST', { tabId, request });
+  await sendMessageToTab({ tabId, message: CHROME_MESSAGES.RECEIVED_REQUEST, data: { request } });
 });
 
 // setting storage
@@ -38,43 +41,51 @@ const sendMessageToTab = async ({ message, data, tabId }) => {
 };
 
 chrome.extension.onMessage.addListener(async function(
-  { fromContentScript, message, data },
+  { fromContentScript, message /*data*/},
   sender,
   sendResponse
 ) {
+  let response = undefined;
   if (!fromContentScript) {
+    // do nothing
+  } else if (message === CHROME_MESSAGES.REQUESTING_OPEN_STATUS) {
+    const tabId = sender.tab.id;
+    response = {
+      open: tabsWithExtensionOpen.has(tabId)
+    };
+  } else if (message === CHROME_MESSAGES.REQUESTING_EXISTING_REQUESTS) {
+    const tabId = sender.tab.id;
+    sendResponse();
+    await sendMessageToTab({
+      message: CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS,
+      data: { existingRequests: requestsManager.getAllRequests({ tabId }) },
+      tabId
+    });
     return;
   }
 
-  if (message === CHROME_MESSAGES.REQUESTING_TOGGLE_POSITION) {
-    console.log('SENDER', sender);
-    sendResponse({ open: tabsWithExtensionOpen.has(sender.tab.id) });
-  }
-
-  console.log('GOT DATA FROM CONTENT SCRIPTS', { message, data });
-  sendResponse();
+  sendResponse(response);
 });
 
-/*
 chrome.webRequest.onBeforeRequest.addListener(
   function(details) {
-    if (!tabsWithExtensionOpen.has(details.tabId)) {
+    const { tabId } = details;
+    if (!tabsWithExtensionOpen.has(tabId)) {
       return;
     }
-    console.log('REQUEST', details.method, details.url, details.requestId, { details });
 
     let parsedBody = null;
     if (details && details.type === 'xmlhttprequest') {
-      parsedBody = arrayBufferToData.toJSON(details.requestBody.raw[0].bytes);
-      console.log(details.url, parsedBody);
+      try {
+        parsedBody = arrayBufferToData.toJSON(details.requestBody.raw[0].bytes);
+      } catch (e) {
+        // do nothing
+      }
     }
 
-    sendMessageToTab({
-      message: CHROME_MESSAGES.RECEIVED_REQUEST,
-      data: { details },
-      tabId: details.tabId,
-      parsedBody
-    });
+    Object.assign(details, { parsedBody });
+
+    requestsManager.registerRequestReceived({ tabId, requestDetails: details });
   },
   { urls: [ '<all_urls>' ] },
   [ 'requestBody' ]
@@ -82,18 +93,13 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
   function(details) {
+    const { tabId } = details;
     if (!tabsWithExtensionOpen.has(details.tabId)) {
       return;
     }
 
-    console.log('HEADERS', details.requestId, details.url, { details });
-    sendMessageToTab({
-      message: CHROME_MESSAGES.RECEIVED_HEADERS,
-      data: { details },
-      tabId: details.tabId
-    });
+    requestsManager.registerHeaderReceived({ tabId, headerDetails: details });
   },
   { urls: [ '<all_urls>' ] },
   [ 'requestHeaders', 'extraHeaders' ]
 );
-*/
