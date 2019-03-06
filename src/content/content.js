@@ -7,61 +7,7 @@ import './content.css';
 import * as R from 'ramda';
 
 import { CHROME_MESSAGES } from '../helpers/constants';
-//import { chromep } from '../helpers/chrome_promisify';
-import { config } from './config';
-import { JsonViewer } from './json_viewer';
-
-const {
-  stateManager: { container: stateManagerContainer }
-} = config;
-
-const sendMessageToParent = ({ message, data }) => {
-  window.parent.postMessage({
-    fromChild: true,
-    message,
-    data
-  });
-};
-
-const REQUESTS = {};
-
-const Main = stateManagerContainer.withStateManagers({
-  stateManagerNames: [],
-  WrappedComponent: class Main extends React.Component {
-    constructor(props) {
-      super(props);
-    }
-
-    componentDidMount() {
-      window.addEventListener(
-        'message',
-        ({ data: { fromParent, message, data } = { fromChild: false } }) => {
-          if (!fromParent) {
-            return;
-          } else if (message === CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS) {
-            Object.assign(REQUESTS, data.existingRequests);
-            console.log('INIT REQUESTS', { REQUESTS });
-          } else if (message === CHROME_MESSAGES.RECEIVED_REQUEST) {
-            const { request } = data;
-            REQUESTS[request.requestDetails.requestId] = request;
-            console.log('GOT ANOTHER REQUEST', { REQUESTS });
-          }
-        }
-      );
-
-      sendMessageToParent({ message: CHROME_MESSAGES.REQUESTING_EXISTING_REQUESTS });
-    }
-
-    render() {
-      return (
-        <div className={'my-extension'}>
-          <JsonViewer />
-          <h1>Hello world - My first Extension sucks!!!!!</h1>
-        </div>
-      );
-    }
-  }
-});
+import { Main } from './components/main';
 
 if (window.parent === window) {
   let iframeContainer = document.createElement('iframe');
@@ -92,18 +38,6 @@ if (window.parent === window) {
     iframeContainer.style.display = open ? 'block' : 'none';
   };
 
-  chrome.runtime.sendMessage(
-    { fromContentScript: true, message: CHROME_MESSAGES.REQUESTING_OPEN_STATUS },
-    function(response) {
-      if (chrome.runtime.lastError) {
-        // need to check lastError
-        console.log('RESPONSE FROM BACKGROUND', response, chrome.runtime.lastError);
-      } else {
-        toggle({ open: response.open });
-      }
-    }
-  );
-
   window.addEventListener(
     'message',
     ({ data: { fromChild, message, data } = { fromChild: false } }) => {
@@ -111,12 +45,9 @@ if (window.parent === window) {
         return;
       }
 
-      chrome.runtime.sendMessage({ fromContentScript: true, message, data }, function(
-        response
-      ) {
+      chrome.runtime.sendMessage({ fromContentScript: true, message, data }, () => {
         if (chrome.runtime.lastError) {
           // need to check lastError
-          console.log('RESPONSE FROM BACKGROUND', response, chrome.runtime.lastError);
         }
       });
     },
@@ -124,19 +55,25 @@ if (window.parent === window) {
   );
 
   chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
-    if (request.message === CHROME_MESSAGES.TOGGLE_EXTENSION) {
+    sendResponse();
+    if (
+      request.message === CHROME_MESSAGES.TOGGLE_EXTENSION ||
+            request.message === CHROME_MESSAGES.ANSWERING_OPEN_STATUS
+    ) {
       toggle({ open: request.data.open });
     } else {
-      console.log(
-        'SENDING MESSAGE FROM BACKGROUND TO IFRAME',
-        request,
-        R.pathOr('N/A', [ 'data', 'details', 'requestId' ], request)
-      );
       iframeContainer.contentWindow.postMessage(R.merge(request, { fromParent: true }));
     }
-
-    sendResponse();
   });
+
+  chrome.runtime.sendMessage(
+    { fromContentScript: true, message: CHROME_MESSAGES.REQUESTING_OPEN_STATUS },
+    () => {
+      if (chrome.runtime.lastError) {
+        // need to check lastError
+      }
+    }
+  );
 } else {
   const app = document.createElement('div');
   app.id = 'my-extension-root';

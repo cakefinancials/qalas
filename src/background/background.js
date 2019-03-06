@@ -14,6 +14,11 @@ chrome.browserAction.onClicked.addListener(async function() {
     tabsWithExtensionOpen.delete(activeTab.id);
   } else {
     tabsWithExtensionOpen.add(activeTab.id);
+    await sendMessageToTab({
+      message: CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS,
+      data: { existingRequests: requestsManager.getAllRequests({ tabId: activeTab.id }) },
+      tabId: activeTab.id
+    });
   }
 
   await sendMessageToActiveTab({
@@ -24,7 +29,6 @@ chrome.browserAction.onClicked.addListener(async function() {
 
 const requestsManager = getRequestsManager();
 requestsManager.addFullRequestReceivedListener(async ({ tabId, request }) => {
-  console.log('FULL REQUEST', { tabId, request });
   await sendMessageToTab({ tabId, message: CHROME_MESSAGES.RECEIVED_REQUEST, data: { request } });
 });
 
@@ -42,29 +46,26 @@ const sendMessageToTab = async ({ message, data, tabId }) => {
 
 chrome.extension.onMessage.addListener(async function(
   { fromContentScript, message /*data*/},
-  sender,
+  { tab: { id: tabId } },
   sendResponse
 ) {
-  let response = undefined;
+  sendResponse();
+
   if (!fromContentScript) {
     // do nothing
   } else if (message === CHROME_MESSAGES.REQUESTING_OPEN_STATUS) {
-    const tabId = sender.tab.id;
-    response = {
-      open: tabsWithExtensionOpen.has(tabId)
-    };
+    await sendMessageToTab({
+      message: CHROME_MESSAGES.ANSWERING_OPEN_STATUS,
+      data: { open: tabsWithExtensionOpen.has(tabId) },
+      tabId
+    });
   } else if (message === CHROME_MESSAGES.REQUESTING_EXISTING_REQUESTS) {
-    const tabId = sender.tab.id;
-    sendResponse();
     await sendMessageToTab({
       message: CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS,
       data: { existingRequests: requestsManager.getAllRequests({ tabId }) },
       tabId
     });
-    return;
   }
-
-  sendResponse(response);
 });
 
 chrome.webRequest.onBeforeRequest.addListener(

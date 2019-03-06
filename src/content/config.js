@@ -1,7 +1,7 @@
 import * as stateManagerLib from '../helpers/state_manager';
 
 const STATE_MANAGER_NAMES = {
-  SLACK_DATA: 'slackData'
+  REQUESTS_ON_CURRENT_TAB: 'requestsOnCurrentTab'
 };
 
 export const config = {
