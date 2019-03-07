@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import * as R from 'ramda';
 import { Button, Input, Row, Icon } from 'antd';
 
-import { JsonViewer } from './json_viewer';
+import { RequestViewer } from './request_viewer';
 import { config } from '../config';
 import { CHROME_MESSAGES } from '../../helpers/constants';
 
@@ -177,6 +177,14 @@ const Main = stateManagerContainer.withStateManagers({
       const { urlFilter } = this.appStateManager.getData();
       const { REQUESTS } = this.requestsStateManager.getData();
 
+      const orderedRequestDetails = R.pipe(
+        R.values,
+        R.map(R.prop('requestDetails')),
+        R.sort((a, b) => a.timeStamp - b.timeStamp)
+      )(REQUESTS);
+
+      console.log({ orderedRequestDetails });
+
       return (
         <Fragment>
           <div style={{ textAlign: 'center' }}>
@@ -205,12 +213,17 @@ const Main = stateManagerContainer.withStateManagers({
               </p>
             </i>
           </div>
-          {R.map(
-            ({ requestDetails }) => (
-              <JsonViewer key={requestDetails.requestId} jsonData={requestDetails} />
+          {R.addIndex(R.map)(
+            (requestDetails, idx) => (
+              <RequestViewer
+                key={requestDetails.requestId}
+                requestDetails={requestDetails}
+                expanded={false}
+                eventNumber={idx + 1}
+              />
             ),
-            R.values(REQUESTS)
-          )}
+            orderedRequestDetails
+          ).reverse()}
         </Fragment>
       );
     }
