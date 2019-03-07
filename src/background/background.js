@@ -83,6 +83,12 @@ chrome.extension.onMessage.addListener(async function(
       tabId
     });
   } else if (message === CHROME_MESSAGES.UPDATE_APP_STATE) {
+    const oldUrlFilter = APP_STATE.urlFilter;
+    const urlFilterHasChanged = oldUrlFilter !== data.APP_STATE.urlFilter;
+    if (urlFilterHasChanged) {
+      requestsManager.flush();
+    }
+
     Object.assign(APP_STATE, data.APP_STATE);
     return await Promise.all(
       [ ...tabsWithExtensionOpen.values() ]
@@ -100,6 +106,13 @@ chrome.extension.onMessage.addListener(async function(
 
 chrome.webRequest.onBeforeRequest.addListener(
   function(details) {
+    if (
+      details.method !== 'POST' ||
+            APP_STATE.urlFilter === '' ||
+            details.url.indexOf(APP_STATE.urlFilter) < 0
+    ) {
+      return;
+    }
     let parsedBody = null;
     if (details && details.type === 'xmlhttprequest') {
       try {
@@ -119,6 +132,13 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
   function(details) {
+    if (
+      details.method !== 'POST' ||
+            APP_STATE.urlFilter === '' ||
+            details.url.indexOf(APP_STATE.urlFilter) < 0
+    ) {
+      return;
+    }
     requestsManager.registerHeaderReceived({ headerDetails: details });
   },
   { urls: [ '<all_urls>' ] },

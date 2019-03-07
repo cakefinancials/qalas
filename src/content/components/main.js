@@ -115,8 +115,8 @@ const Main = stateManagerContainer.withStateManagers({
                                 Qala
               </p>
             </strong>
-            {body}
           </div>
+          {body}
         </div>
       );
     }
@@ -177,11 +177,6 @@ const Main = stateManagerContainer.withStateManagers({
       const { urlFilter } = this.appStateManager.getData();
       const { REQUESTS } = this.requestsStateManager.getData();
 
-      const filteredRequests = R.pipe(
-        R.values,
-        R.filter(({ requestDetails: { url } }) => url.indexOf(urlFilter) >= 0)
-      )(REQUESTS);
-
       return (
         <Fragment>
           <div style={{ textAlign: 'center' }}>
@@ -214,7 +209,7 @@ const Main = stateManagerContainer.withStateManagers({
             ({ requestDetails }) => (
               <JsonViewer key={requestDetails.requestId} jsonData={requestDetails} />
             ),
-            filteredRequests
+            R.values(REQUESTS)
           )}
         </Fragment>
       );

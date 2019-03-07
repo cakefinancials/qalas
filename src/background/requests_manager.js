@@ -1,8 +1,8 @@
 import * as R from 'ramda';
 
 const getRequestsManager = () => {
-  const PENDING_REQUESTS = {};
-  const REQUESTS = {};
+  let PENDING_REQUESTS = {};
+  let REQUESTS = {};
 
   const propOrWithSet = ({ obj, propName, defaultSetValue }) => {
     const propValue = R.propOr(defaultSetValue, propName, obj);
@@ -52,6 +52,11 @@ const getRequestsManager = () => {
 
     getAllRequests: () => {
       return R.clone(REQUESTS);
+    },
+
+    flush: () => {
+      PENDING_REQUESTS = {};
+      REQUESTS = {};
     }
   };
 };
