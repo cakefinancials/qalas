@@ -8,7 +8,7 @@ const getStateManagerContainer = () => {
     let lastNotification = {
       data: null,
       error: null,
-      loading: false,
+      loading: false
     };
 
     const subscribe = notifyFn => {
@@ -43,7 +43,9 @@ const getStateManagerContainer = () => {
 
       try {
         const updatedData = R.merge(lastNotification.data || {}, await fn());
-        notify(R.merge(lastNotification, { loading: false, error: null, data: updatedData }));
+        notify(
+          R.merge(lastNotification, { loading: false, error: null, data: updatedData })
+        );
       } catch (error) {
         notify(R.merge(lastNotification, { loading: false, error }));
       }
@@ -52,14 +54,16 @@ const getStateManagerContainer = () => {
     const syncUpdate = data => {
       try {
         const updatedData = R.merge(lastNotification.data || {}, data);
-        notify(R.merge(lastNotification, { loading: false, error: null, data: updatedData }));
+        notify(
+          R.merge(lastNotification, { loading: false, error: null, data: updatedData })
+        );
       } catch (error) {
         notify(R.merge(lastNotification, { loading: false, error }));
       }
     };
 
-    const clearData = () => {
-      notify(R.merge(lastNotification, { loading: false, error: null, data: null }));
+    const clearData = ({ loading = false }) => {
+      notify(R.merge(lastNotification, { loading, error: null, data: null }));
     };
 
     return {
@@ -70,14 +74,17 @@ const getStateManagerContainer = () => {
       getData: () => lastNotification.data,
       getError: () => lastNotification.error,
       syncUpdate,
-      subscribe,
+      subscribe
     };
   };
 
   const STATE_MANAGERS_CACHE = {};
 
   const withStateManagers = ({ WrappedComponent, stateManagerNames }) => {
-    const STATE_MANAGERS = R.map(name => ({ name, manager: getStateManager({ name }) }), stateManagerNames);
+    const STATE_MANAGERS = R.map(
+      name => ({ name, manager: getStateManager({ name }) }),
+      stateManagerNames
+    );
 
     // ...and returns another component...
     const WrappedWithStateManagers = class WrappedWithStateManagers extends Component {

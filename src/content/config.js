@@ -1,7 +1,8 @@
 import * as stateManagerLib from '../helpers/state_manager';
 
 const STATE_MANAGER_NAMES = {
-  REQUESTS_ON_CURRENT_TAB: 'requestsOnCurrentTab'
+  REQUESTS: 'REQUESTS',
+  APP_STATE: 'APP_STATE'
 };
 
 export const config = {

@@ -4,6 +4,8 @@ import { arrayBufferToData } from '../helpers/array_buffer_to_data';
 import { CHROME_MESSAGES } from '../helpers/constants';
 import { getRequestsManager } from './requests_manager';
 
+const APP_STATE = { urlFilter: '' };
+
 // Called when the user clicks on the browser action
 const tabsWithExtensionOpen = new Set();
 chrome.browserAction.onClicked.addListener(async function() {
@@ -16,7 +18,7 @@ chrome.browserAction.onClicked.addListener(async function() {
     tabsWithExtensionOpen.add(activeTab.id);
     await sendMessageToTab({
       message: CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS,
-      data: { existingRequests: requestsManager.getAllRequests({ tabId: activeTab.id }) },
+      data: { existingRequests: requestsManager.getAllRequests() },
       tabId: activeTab.id
     });
   }
@@ -28,8 +30,11 @@ chrome.browserAction.onClicked.addListener(async function() {
 });
 
 const requestsManager = getRequestsManager();
-requestsManager.addFullRequestReceivedListener(async ({ tabId, request }) => {
-  await sendMessageToTab({ tabId, message: CHROME_MESSAGES.RECEIVED_REQUEST, data: { request } });
+requestsManager.addFullRequestReceivedListener(async ({ request }) => {
+  await sendMessageToAllTabsWithExtensionOpen({
+    message: CHROME_MESSAGES.RECEIVED_REQUEST,
+    data: { request }
+  });
 });
 
 // setting storage
@@ -44,8 +49,14 @@ const sendMessageToTab = async ({ message, data, tabId }) => {
   return await chromep.tabs.sendMessage(tabId, { message, data });
 };
 
+const sendMessageToAllTabsWithExtensionOpen = async ({ message, data }) => {
+  return await Promise.all(
+    [ ...tabsWithExtensionOpen.values() ].map(tabId => sendMessageToTab({ message, data, tabId }))
+  );
+};
+
 chrome.extension.onMessage.addListener(async function(
-  { fromContentScript, message /*data*/},
+  { fromContentScript, message, data },
   { tab: { id: tabId } },
   sendResponse
 ) {
@@ -62,19 +73,33 @@ chrome.extension.onMessage.addListener(async function(
   } else if (message === CHROME_MESSAGES.REQUESTING_EXISTING_REQUESTS) {
     await sendMessageToTab({
       message: CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS,
-      data: { existingRequests: requestsManager.getAllRequests({ tabId }) },
+      data: { existingRequests: requestsManager.getAllRequests() },
       tabId
     });
+  } else if (message === CHROME_MESSAGES.REQUESTING_APP_STATE) {
+    await sendMessageToTab({
+      message: CHROME_MESSAGES.ANSWERING_APP_STATE,
+      data: { APP_STATE },
+      tabId
+    });
+  } else if (message === CHROME_MESSAGES.UPDATE_APP_STATE) {
+    Object.assign(APP_STATE, data.APP_STATE);
+    return await Promise.all(
+      [ ...tabsWithExtensionOpen.values() ]
+        .filter(openTabId => openTabId !== tabId)
+        .map(otherTabId =>
+          sendMessageToTab({
+            message: CHROME_MESSAGES.ANSWERING_APP_STATE,
+            data: { APP_STATE },
+            tabId: otherTabId
+          })
+        )
+    );
   }
 });
 
 chrome.webRequest.onBeforeRequest.addListener(
   function(details) {
-    const { tabId } = details;
-    if (!tabsWithExtensionOpen.has(tabId)) {
-      return;
-    }
-
     let parsedBody = null;
     if (details && details.type === 'xmlhttprequest') {
       try {
@@ -86,7 +111,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 
     Object.assign(details, { parsedBody });
 
-    requestsManager.registerRequestReceived({ tabId, requestDetails: details });
+    requestsManager.registerRequestReceived({ requestDetails: details });
   },
   { urls: [ '<all_urls>' ] },
   [ 'requestBody' ]
@@ -94,12 +119,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
   function(details) {
-    const { tabId } = details;
-    if (!tabsWithExtensionOpen.has(details.tabId)) {
-      return;
-    }
-
-    requestsManager.registerHeaderReceived({ tabId, headerDetails: details });
+    requestsManager.registerHeaderReceived({ headerDetails: details });
   },
   { urls: [ '<all_urls>' ] },
   [ 'requestHeaders', 'extraHeaders' ]
