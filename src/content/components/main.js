@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import * as R from 'ramda';
-import { Input } from 'antd';
+import { Button, Input, Row } from 'antd';
 
 import { JsonViewer } from './json_viewer';
 import { config } from '../config';
@@ -46,6 +46,11 @@ const sendMessageToParent = ({ message, data }) => {
 
 sendMessageToParent({ message: CHROME_MESSAGES.REQUESTING_EXISTING_REQUESTS });
 
+const DISPLAY_STATE = {
+  ENTER_URL: 'ENTER_URL',
+  VIEW_PAYLOAD_DATA: 'VIEW_PAYLOAD_DATA'
+};
+
 const Main = stateManagerContainer.withStateManagers({
   stateManagerNames: [ STATE_MANAGER_NAMES.REQUESTS_ON_CURRENT_TAB ],
   WrappedComponent: class Main extends React.Component {
@@ -53,49 +58,90 @@ const Main = stateManagerContainer.withStateManagers({
       super(props);
 
       this.state = {
-        filter: ''
+        filter: '',
+        displayState: DISPLAY_STATE.ENTER_URL
       };
 
       this.requestsOnCurrentTabStateManager =
                 props.stateManagers[STATE_MANAGER_NAMES.REQUESTS_ON_CURRENT_TAB];
     }
 
-        onChangeFilter = e => {
-          this.setState({ filter: e.target.value });
-        };
+    render() {
+      const { displayState } = this.state;
+      let body;
+      if (displayState === DISPLAY_STATE.VIEW_PAYLOAD_DATA) {
+        body = this.renderViewDataPayload();
+      } else if (displayState === DISPLAY_STATE.ENTER_URL) {
+        body = this.renderEnterUrl();
+      }
 
-        render() {
-          const { REQUESTS } = this.requestsOnCurrentTabStateManager.getData();
-          const { filter } = this.state;
+      return <div className={'my-extension'}>{body}</div>;
+    }
 
-          const filteredRequests = R.pipe(
-            R.values,
-            R.filter(({ requestDetails: { url } }) => url.indexOf(filter) >= 0)
-          )(REQUESTS);
+    renderEnterUrl() {
+      const { filter } = this.state;
+      return (
+        <Fragment>
+          <div style={{ textAlign: 'center' }}>
+            <strong>
+              <p style={{ fontSize: '20px', marginBottom: '0px' }}>Qala</p>
+            </strong>
+            <i>
+              <p style={{ fontSize: '12px' }}>Change the way you QA</p>
+            </i>
+          </div>
+          <Row type="flex" justify="center">
+            <Input
+              placeholder="https://example.com/evs"
+              value={filter}
+              onChange={e => this.setState({ filter: e.target.value })}
+              ref={node => (this.userNameInput = node)}
+            />
+          </Row>
+          <Row type="flex" justify="center">
+            <Button
+              className="start-tracking-events-btn"
+              disabled={filter === ''}
+              onClick={() =>
+                this.setState({ displayState: DISPLAY_STATE.VIEW_PAYLOAD_DATA })
+              }
+            >
+                            START TRACKING EVENTS
+            </Button>
+            <p style={{ fontSize: '12px', borderTop: '5px' }}>
+                            Simply paste in your network request URL to start tracking events. No
+                            more digging around in your console.
+            </p>
+          </Row>
+        </Fragment>
+      );
+    }
 
-          return (
-            <div className={'my-extension'}>
-              <Input
-                placeholder="Enter your filter"
-                value={filter}
-                onChange={this.onChangeFilter}
-                ref={node => (this.userNameInput = node)}
-              />
-              {JSON.stringify(
-                {
-                  REQUESTS: R.map(
-                    ({ requestDetails: { requestId, url } }) => ({ requestId, url }),
-                    filteredRequests
-                  )
-                },
-                null,
-                4
-              )}
-              <JsonViewer />
-              <h1>Hello world - My first Extension sucks!!!!!</h1>
-            </div>
-          );
-        }
+    renderViewDataPayload() {
+      const { filter } = this.state;
+      const { REQUESTS } = this.requestsOnCurrentTabStateManager.getData();
+
+      const filteredRequests = R.pipe(
+        R.values,
+        R.filter(({ requestDetails: { url } }) => url.indexOf(filter) >= 0)
+      )(REQUESTS);
+
+      return (
+        <Fragment>
+          <div style={{ textAlign: 'center' }}>
+            <i>
+              <p style={{ fontSize: '12px' }}>Request URL: {filter}</p>
+            </i>
+          </div>
+          {R.map(
+            ({ requestDetails }) => (
+              <JsonViewer key={requestDetails.requestId} jsonData={requestDetails} />
+            ),
+            filteredRequests
+          )}
+        </Fragment>
+      );
+    }
   }
 });
 

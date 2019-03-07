@@ -2,8 +2,23 @@
 @import '~antd/dist/antd.css';
 
 .my-extension {
-    padding: 20px;
+    padding-top: 5px;
+    padding-left: 20px;
+    height: 100%;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    background-color: #3a3a3a;
+    font-family: Lato;
+    color: white;
 }
 .my-extension h1 {
     color: #000;
+}
+
+.my-extension .start-tracking-events-btn {
+    border-radius: 30px;
+    background: #f55839;
+    border: 0px;
+    color: white;
+    margin-top: 5px;
 }

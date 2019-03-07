@@ -67,6 +67,9 @@
         "test": "node scripts/test.js",
         "devmode": "nodemon --exec 'node scripts/build.js && date >> build/reload.me' --ignore build/"
     },
+    "nodemonConfig": {
+        "ext": "js css"
+    },
     "eslintConfig": {
         "extends": "react-app"
     },
