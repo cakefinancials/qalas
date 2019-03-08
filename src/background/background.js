@@ -46,7 +46,7 @@ const sendMessageToActiveTab = async ({ message, data }) => {
 };
 
 const sendMessageToTab = async ({ message, data, tabId }) => {
-  return await chromep.tabs.sendMessage(tabId, { message, data });
+  return await chromep.tabs.sendMessage(tabId, { message, data }).catch(() => {});
 };
 
 const sendMessageToAllTabsWithExtensionOpen = async ({ message, data }) => {
