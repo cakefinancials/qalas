@@ -90,7 +90,12 @@ chrome.extension.onMessage.addListener(async function(
     }
 
     Object.assign(APP_STATE, data.APP_STATE);
-    return await Promise.all(
+    await sendMessageToAllTabsWithExtensionOpen({
+      message: CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS,
+      data: { existingRequests: requestsManager.getAllRequests() }
+    });
+
+    await Promise.all(
       [ ...tabsWithExtensionOpen.values() ]
         .filter(openTabId => openTabId !== tabId)
         .map(otherTabId =>

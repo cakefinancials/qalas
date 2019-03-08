@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import moment from 'moment';
 import { Icon, Row, Col } from 'antd';
 
@@ -34,13 +34,15 @@ export class RequestViewer extends React.Component {
     this.state = {
       expanded: this.props.expanded
     };
+
+    this.containerRef = React.createRef();
   }
 
   render() {
     const { expanded } = this.state;
     const { requestDetails, eventNumber, pathClicked } = this.props;
     return (
-      <Fragment>
+      <div ref={this.containerRef}>
         <Row
           className={`request-viewer-summary ${expanded ? 'expanded' : 'not-expanded'}`}
         >
@@ -84,7 +86,7 @@ export class RequestViewer extends React.Component {
             }}
           />
         ) : null}
-      </Fragment>
+      </div>
     );
   }
 }

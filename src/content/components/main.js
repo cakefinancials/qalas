@@ -28,7 +28,7 @@ window.addEventListener('message', ({ data: { fromParent, message, data } = { fr
     return;
   } else if (message === CHROME_MESSAGES.ANSWERING_EXISTING_REQUESTS) {
     requestsStateManager.syncUpdate({
-      REQUESTS: R.merge(requestsStateManager.getData().REQUESTS, data.existingRequests)
+      REQUESTS: data.existingRequests
     });
   } else if (message === CHROME_MESSAGES.RECEIVED_REQUEST) {
     const { request } = data;
@@ -46,7 +46,6 @@ window.addEventListener('message', ({ data: { fromParent, message, data } = { fr
     });
   } else if (message === CHROME_MESSAGES.ANSWERING_APP_STATE) {
     const { APP_STATE } = data;
-    console.log({ APP_STATE });
     appStateManager.syncUpdate(APP_STATE);
   }
 });
@@ -263,7 +262,7 @@ const Main = stateManagerContainer.withStateManagers({
                 }}
               />
             );
-          }, requestDetailsWithPath)}
+          }, requestDetailsWithPath).reverse()}
         </Fragment>
       );
     }
@@ -279,9 +278,19 @@ const Main = stateManagerContainer.withStateManagers({
               <RequestViewer
                 key={requestDetails.requestId}
                 requestDetails={requestDetails}
-                expanded={false}
+                expanded={this.requestIdToExpand === requestDetails.requestId}
                 eventNumber={idx + 1}
                 pathClicked={pathToValue => this.setState({ pathToValue })}
+                ref={ref => {
+                  if (ref === null) {
+                    return;
+                  }
+
+                  if (this.requestIdToExpand === requestDetails.requestId) {
+                    this.requestIdToExpand = undefined;
+                    ref.containerRef.current.scrollIntoView(true);
+                  }
+                }}
               />
             ),
             orderedRequestDetails

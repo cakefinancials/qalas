@@ -10,7 +10,7 @@ export class PathViewer extends React.Component {
   }
 
   render() {
-    const { requestDetails, pathToValue } = this.props;
+    const { requestDetails, pathToValue, viewEventClicked } = this.props;
 
     return (
       <Row className="path-viewer-summary">
@@ -18,8 +18,13 @@ export class PathViewer extends React.Component {
           <span>{moment(requestDetails.timeStamp).format('MM/DD h:mm:ss a')}</span>
         </Col>
         <Col span={16}>
-          <span style={{ marginLeft: '30px', color: '#d8d8d8' }}>
-            {R.path(pathToValue, requestDetails.parsedBody)}
+          <span
+            style={{ overflowWrap: 'break-word', color: '#d8d8d8', cursor: 'pointer' }}
+            onClick={() => {
+              viewEventClicked();
+            }}
+          >
+            {JSON.stringify(R.path(pathToValue, requestDetails.parsedBody))}
           </span>
         </Col>
       </Row>
