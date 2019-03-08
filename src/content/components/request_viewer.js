@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import moment from 'moment';
-import { Icon, Row } from 'antd';
+import { Icon, Row, Col } from 'antd';
 
 import JSONTree from 'react-json-tree';
 import './request_viewer.css';
@@ -38,19 +38,16 @@ export class RequestViewer extends React.Component {
 
   render() {
     const { expanded } = this.state;
-    const { requestDetails, eventNumber } = this.props;
-
+    const { requestDetails, eventNumber, pathClicked } = this.props;
     return (
       <Fragment>
-        <Row>
-          <div
-            style={{
-              fontSize: '11px',
-              margin: '10px 0px 10px 0px',
-              borderBottom: '1px solid white'
-            }}
-          >
+        <Row
+          className={`request-viewer-summary ${expanded ? 'expanded' : 'not-expanded'}`}
+        >
+          <Col span={8}>
             <span>{moment(requestDetails.timeStamp).format('MM/DD h:mm:ss a')}</span>
+          </Col>
+          <Col span={16}>
             <span style={{ float: 'right' }}>
                             Event {eventNumber}
               <Icon
@@ -62,31 +59,24 @@ export class RequestViewer extends React.Component {
                 onClick={() => this.setState({ expanded: !expanded })}
               />
             </span>
-          </div>
+          </Col>
         </Row>
         {expanded ? (
           <JSONTree
             theme={theme}
             invertTheme={false}
-            data={requestDetails.parsedBody || requestDetails.requestBody}
+            data={requestDetails.parsedBody}
             shouldExpandNode={() => true}
             labelRenderer={function(reversePath) {
               const pathToNode = R.tail(R.reverse(reversePath));
-              return (
-                <strong
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => console.log('LABEL', pathToNode)}
-                >
-                  {R.last(pathToNode)}
-                </strong>
-              );
+              return <strong>{R.last(pathToNode)}</strong>;
             }}
             valueRenderer={function(rawValue, ...reversePath) {
               const pathToValue = R.init(R.tail(R.reverse(reversePath)));
               return (
                 <em
                   style={{ cursor: 'pointer' }}
-                  onClick={() => console.log('VALUE', pathToValue)}
+                  onClick={() => pathClicked(pathToValue)}
                 >
                   {rawValue}
                 </em>

@@ -113,7 +113,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     ) {
       return;
     }
-    let parsedBody = null;
+    let parsedBody = details.requestBody;
     if (details && details.type === 'xmlhttprequest') {
       try {
         parsedBody = arrayBufferToData.toJSON(details.requestBody.raw[0].bytes);

@@ -22,3 +22,29 @@
     color: white;
     margin-top: 5px;
 }
+
+.my-extension .back-to-events-btn {
+    border-radius: 30px;
+    background: #f55839;
+    border: 0px;
+    color: white;
+}
+
+.my-extension .request-viewer-summary {
+    font-size: 11px;
+    margin: 10px 0px 10px 0px;
+    border-bottom: 1px solid #979797;
+    color: 'white';
+}
+
+.my-extension .path-viewer-summary {
+    font-size: 11px;
+    margin: 10px 0px 10px 0px;
+    border-bottom: 1px solid #979797;
+    color: 'white';
+}
+
+.my-extension .request-viewer-summary.expanded {
+    border-bottom: 1px solid #f96f48;
+    color: #f96f48;
+}

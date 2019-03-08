@@ -1,8 +1,9 @@
 import React, { Fragment } from 'react';
 import * as R from 'ramda';
-import { Button, Input, Row, Icon } from 'antd';
+import { Button, Input, Row, Col, Icon } from 'antd';
 
 import { RequestViewer } from './request_viewer';
+import { PathViewer } from './path_viewer';
 import { config } from '../config';
 import { CHROME_MESSAGES } from '../../helpers/constants';
 
@@ -61,12 +62,6 @@ const sendMessageToParent = ({ message, data }) => {
 sendMessageToParent({ message: CHROME_MESSAGES.REQUESTING_EXISTING_REQUESTS });
 sendMessageToParent({ message: CHROME_MESSAGES.REQUESTING_APP_STATE });
 
-const DISPLAY_STATE = {
-  ENTER_URL: 'ENTER_URL',
-  VIEW_PAYLOAD_DATA: 'VIEW_PAYLOAD_DATA',
-  LOADING: 'LOADING'
-};
-
 const Main = stateManagerContainer.withStateManagers({
   stateManagerNames: [ STATE_MANAGER_NAMES.REQUESTS, STATE_MANAGER_NAMES.APP_STATE ],
   WrappedComponent: class Main extends React.Component {
@@ -77,27 +72,21 @@ const Main = stateManagerContainer.withStateManagers({
       this.requestsStateManager = props.stateManagers[STATE_MANAGER_NAMES.REQUESTS];
 
       this.state = {
-        urlFilter: ''
+        urlFilter: '',
+        pathToValue: null
       };
     }
 
     render() {
-      let displayState;
-      if (this.appStateManager.isLoading()) {
-        displayState = DISPLAY_STATE.LOADING;
-      } else if (this.appStateManager.getData().urlFilter === '') {
-        displayState = DISPLAY_STATE.ENTER_URL;
-      } else {
-        displayState = DISPLAY_STATE.VIEW_PAYLOAD_DATA;
-      }
-
       let body;
-      if (displayState === DISPLAY_STATE.VIEW_PAYLOAD_DATA) {
-        body = this.renderViewDataPayload();
-      } else if (displayState === DISPLAY_STATE.ENTER_URL) {
-        body = this.renderEnterUrl();
-      } else if (displayState === DISPLAY_STATE.LOADING) {
+      if (this.appStateManager.isLoading()) {
         body = this.renderLoading();
+      } else if (this.appStateManager.getData().urlFilter === '') {
+        body = this.renderEnterUrl();
+      } else if (this.state.pathToValue !== null) {
+        body = this.renderViewPath();
+      } else {
+        body = this.renderViewDataPayload();
       }
 
       return (
@@ -173,46 +162,118 @@ const Main = stateManagerContainer.withStateManagers({
       );
     }
 
-    renderViewDataPayload() {
-      const { urlFilter } = this.appStateManager.getData();
+    getOrderedRequestDetails() {
       const { REQUESTS } = this.requestsStateManager.getData();
 
-      const orderedRequestDetails = R.pipe(
+      return R.pipe(
         R.values,
         R.map(R.prop('requestDetails')),
         R.sort((a, b) => a.timeStamp - b.timeStamp)
       )(REQUESTS);
+    }
 
-      console.log({ orderedRequestDetails });
+    getFilterChangeUI() {
+      const { urlFilter } = this.appStateManager.getData();
+
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <i>
+            <p style={{ fontSize: '12px' }}>
+                            Request URL: {urlFilter}
+              <Icon
+                style={{
+                  fontSize: '14px',
+                  marginLeft: '5px',
+                  cursor: 'pointer'
+                }}
+                type="edit"
+                onClick={() => {
+                  const APP_STATE = R.merge(this.appStateManager.getData(), {
+                    urlFilter: ''
+                  });
+                  this.appStateManager.syncUpdate(APP_STATE);
+                  sendMessageToParent({
+                    message: CHROME_MESSAGES.UPDATE_APP_STATE,
+                    data: { APP_STATE }
+                  });
+                  this.setState({ urlFilter: '' });
+                }}
+              />
+            </p>
+          </i>
+        </div>
+      );
+    }
+
+    renderViewPath() {
+      const orderedRequestDetails = this.getOrderedRequestDetails();
+
+      const requestDetailsWithPath = R.reject(requestDetails => {
+        const DOES_NOT_HAVE_PATH_OBJ = {};
+        const valueAtPath = R.pathOr(
+          DOES_NOT_HAVE_PATH_OBJ,
+          this.state.pathToValue,
+          requestDetails.parsedBody
+        );
+
+        return valueAtPath === DOES_NOT_HAVE_PATH_OBJ;
+      }, orderedRequestDetails);
 
       return (
         <Fragment>
-          <div style={{ textAlign: 'center' }}>
-            <i>
-              <p style={{ fontSize: '12px' }}>
-                                Request URL: {urlFilter}
-                <Icon
+          {this.getFilterChangeUI()}
+          <Row>
+            <div
+              style={{
+                fontSize: '16px'
+              }}
+            >
+              <Col span={8}>
+                <Button
+                  className="back-to-events-btn"
+                  onClick={() => this.setState({ pathToValue: null })}
+                >
+                  <Icon type="arrow-left" />
+                                    BACK
+                </Button>
+              </Col>
+              <Col span={16}>
+                <span
                   style={{
-                    fontSize: '14px',
-                    marginLeft: '5px',
-                    cursor: 'pointer'
+                    fontWeight: 'bold',
+                    color: '#ea81ff',
+                    marginLeft: '20px'
                   }}
-                  type="edit"
-                  onClick={() => {
-                    const APP_STATE = R.merge(this.appStateManager.getData(), {
-                      urlFilter: ''
-                    });
-                    this.appStateManager.syncUpdate(APP_STATE);
-                    sendMessageToParent({
-                      message: CHROME_MESSAGES.UPDATE_APP_STATE,
-                      data: { APP_STATE }
-                    });
-                    this.setState({ urlFilter: '' });
-                  }}
-                />
-              </p>
-            </i>
-          </div>
+                >
+                  {this.state.pathToValue.join(' > ')}
+                </span>
+                <span> history</span>
+              </Col>
+            </div>
+          </Row>
+          {R.map(requestDetails => {
+            return (
+              <PathViewer
+                key={requestDetails.requestId}
+                pathToValue={this.state.pathToValue}
+                requestDetails={requestDetails}
+                viewEventClicked={() => {
+                  this.requestIdToExpand = requestDetails.requestId;
+                  this.setState({ pathToValue: null });
+                }}
+              />
+            );
+          }, requestDetailsWithPath)}
+        </Fragment>
+      );
+    }
+
+    renderViewDataPayload() {
+      const orderedRequestDetails = this.getOrderedRequestDetails();
+
+      return (
+        <Fragment>
+          {this.getFilterChangeUI()}
           {R.addIndex(R.map)(
             (requestDetails, idx) => (
               <RequestViewer
@@ -220,6 +281,7 @@ const Main = stateManagerContainer.withStateManagers({
                 requestDetails={requestDetails}
                 expanded={false}
                 eventNumber={idx + 1}
+                pathClicked={pathToValue => this.setState({ pathToValue })}
               />
             ),
             orderedRequestDetails
