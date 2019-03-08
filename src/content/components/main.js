@@ -178,7 +178,7 @@ const Main = stateManagerContainer.withStateManagers({
         <div style={{ textAlign: 'center' }}>
           <i>
             <p style={{ fontSize: '12px' }}>
-                            Request URL: {urlFilter}
+                            URL Filter: {urlFilter}
               <Icon
                 style={{
                   fontSize: '14px',
