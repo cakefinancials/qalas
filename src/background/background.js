@@ -4,7 +4,7 @@ import { arrayBufferToData } from '../helpers/array_buffer_to_data';
 import { CHROME_MESSAGES } from '../helpers/constants';
 import { getRequestsManager } from './requests_manager';
 
-const APP_STATE = { urlFilter: 'evs' };
+const APP_STATE = { urlFilter: '' };
 
 // Called when the user clicks on the browser action
 const tabsWithExtensionOpen = new Set();

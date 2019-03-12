@@ -12,7 +12,21 @@ import { Main } from './components/main';
 if (window.parent === window) {
   let iframeContainer = document.createElement('iframe');
   iframeContainer.id = 'my-extension-root';
-  iframeContainer.style.display = 'none';
+  Object.assign(iframeContainer.style, {
+    display: 'none',
+    height: '50%',
+    position: 'fixed',
+    top: '0px',
+    right: '0px',
+    zIndex: '2147483647',
+    backgroundColor: 'white',
+    marginTop: '10px',
+    marginRight: '10px',
+    boxShadow: 'none',
+    borderRadius: '10px',
+    width: '350px',
+    border: 'none'
+  });
   document.body.appendChild(iframeContainer);
   iframeContainer = document.getElementById('my-extension-root');
 
